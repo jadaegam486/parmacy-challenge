@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>약국 챌린지 - 약사 체험 게임</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:#e8f5ee;color:#2b3a33;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:760px;padding:10px}
+.top{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px;padding:8px 14px;box-shadow:0 2px 6px #0002;font-weight:bold;gap:8px;flex-wrap:wrap}
+.timer{font-size:22px}.timer.low{color:#d62828;animation:pulse .5s infinite alternate}
+@keyframes pulse{to{transform:scale(1.15)}}
+.shop{margin-top:10px;background:linear-gradient(#cdeedd,#f7fffb);border:4px solid #3a9d6e;border-radius:18px;min-height:470px;padding:14px;position:relative;overflow:hidden}
+.sign{position:absolute;top:-4px;left:50%;transform:translateX(-50%);background:#3a9d6e;color:#fff;padding:3px 22px;border-radius:0 0 14px 14px;font-weight:bold;font-size:14px}
+.cust{display:flex;gap:12px;align-items:flex-start;margin-top:26px}
+.face{font-size:64px;line-height:1}
+.bubble{background:#fff;border:3px solid #2b3a33;border-radius:16px;padding:10px 14px;font-size:17px;flex:1;position:relative}
+.pat{height:12px;background:#ccc;border-radius:8px;margin:10px 0;overflow:hidden}
+.pat i{display:block;height:100%;background:#3aa655;width:100%}
+.opts{display:grid;gap:8px;margin-top:10px}
+.opt,.btn{font:inherit;font-size:16px;padding:12px;border:3px solid #2b3a33;border-radius:12px;background:#fff;cursor:pointer;text-align:left;font-weight:bold}
+.opt:hover{background:#fff3b0}.opt:disabled{opacity:.6;cursor:default}
+.btn{background:#3a9d6e;color:#fff;text-align:center}
+.btn.red{background:#d62828}
+.items{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.item{font:inherit;padding:10px 12px;border:3px solid #2b3a33;border-radius:12px;background:#fff;cursor:pointer;font-weight:bold}
+.item.sel{background:#ffe066;transform:scale(1.05)}
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bin{font:inherit;padding:14px 4px;border:3px solid #2b3a33;border-radius:12px;cursor:pointer;font-weight:bold;font-size:15px}
+.b-drug{background:#ffd6d6}.b-paper{background:#d6e8ff}.b-trash{background:#e4e4e4}
+.fb{margin-top:10px;padding:10px;border-radius:12px;font-weight:bold;font-size:15px}
+.fb.ok{background:#c9f2d3;color:#14602b}.fb.no{background:#ffd4d4;color:#8b1111}
+.ov{position:absolute;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:5;padding:10px}
+.ov.show{display:flex}
+.card{background:#fff;border-radius:18px;padding:18px;max-width:560px;width:100%;text-align:center;max-height:92%;overflow:auto}
+.card h2{margin:4px 0}
+.dish{position:relative;height:210px;border-radius:50%/45%;background:radial-gradient(#fff9d6,#ffe9a0);border:6px solid #b69a3a;margin:10px auto;max-width:420px;overflow:hidden}
+.bac{position:absolute;font-size:26px;animation:wob 1.2s infinite alternate ease-in-out;transition:opacity .3s}
+.bac.res{filter:hue-rotate(200deg) saturate(3)}
+@keyframes wob{from{transform:translate(0,0) rotate(-10deg)}to{transform:translate(8px,-6px) rotate(10deg)}}
+.alarm{animation:alarm .4s 4}
+@keyframes alarm{50%{background:#ff9d9d}}
+.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.small{font-size:13px;color:#555}
+ul.ls{text-align:left;line-height:1.7;font-size:14px;padding-left:20px}
+
+body{background:linear-gradient(#bfe9d3,#e8f5ee 40%);}
+.top{background:linear-gradient(#fff,#eefaf3);border:3px solid #2b3a33;box-shadow:0 4px 0 #2b3a33}
+.shop{background:#d9f2e4;border:4px solid #2b3a33;box-shadow:0 6px 0 #1f6b4a;min-height:600px;padding:0}
+#bg{position:absolute;inset:0;width:100%;height:100%}
+#main{position:relative;z-index:2;margin:96px 12px 12px;background:#ffffffd9;border:3px solid #2b3a33;border-radius:18px;padding:12px;backdrop-filter:blur(2px)}
+.sign{display:none}
+.face{width:84px;flex:none;filter:drop-shadow(0 3px 0 #0002)}
+.face svg{width:84px;height:100px;display:block}
+.face.mad svg{animation:shake .25s infinite}
+.bubble{background:#fff;border:3px solid #2b3a33;border-radius:16px;box-shadow:0 3px 0 #2b3a33}
+.bubble:before{content:"";position:absolute;left:-14px;top:22px;border:8px solid transparent;border-right:12px solid #2b3a33;border-left:0}
+.opt,.item,.bin{box-shadow:0 4px 0 #2b3a33;transition:transform .08s}
+.opt:active,.item:active,.bin:active{transform:translateY(3px);box-shadow:0 1px 0 #2b3a33}
+.opt{display:flex;align-items:center;gap:10px}
+.opt .k{flex:none;width:28px;height:28px;border-radius:50%;background:#3a9d6e;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.item{display:flex;align-items:center;gap:6px;padding:6px 12px}
+.item svg{width:36px;height:36px}
+.bin{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bin svg{width:40px;height:40px}
+.btn{box-shadow:0 4px 0 #1f6b4a}.btn.red{box-shadow:0 4px 0 #8b1111}
+.pat{height:14px;border:2px solid #2b3a33;background:#e5e5e5}
+.dish{background:radial-gradient(circle at 40% 35%,#fffbe0,#ffe9a0 70%);box-shadow:inset 0 0 25px #b69a3a88}
+.bac{width:34px;height:34px}.bac svg{width:100%;height:100%}
+.bac.res{filter:none}
+.pop{animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+
+.rkw{max-height:46vh;overflow:auto;border-radius:10px}.rk{width:100%;border-collapse:collapse;font-size:15px;margin:8px 0}
+.rk td,.rk th{padding:6px 8px;border-bottom:2px solid #e3e3e3}
+.rk th{background:#3a9d6e;color:#fff;position:sticky;top:0}
+.rk tr.me{background:#fff3b0;font-weight:bold;animation:pop .5s}
+.reg{background:#f3fbf6;border:3px dashed #3a9d6e;border-radius:14px;padding:10px;margin:10px 0}
+.reg input{font:inherit;font-size:16px;padding:10px;border:3px solid #2b3a33;border-radius:10px;width:60%;max-width:240px;text-align:center}
+.btn.gray{background:#777;box-shadow:0 4px 0 #444}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+</style></head><body>
+<div id="app">
+ <div class="top"><span id="hp">❤️❤️❤️</span><span class="timer" id="tm">⏱️ 2:00</span><span id="sc">⭐ 0</span><span id="cb"></span></div>
+ <div class="shop" id="shop"><svg id="bg" viewBox="0 0 760 600" preserveAspectRatio="xMidYMin slice"></svg>
+  <div id="main"></div>
+  <div class="ov show" id="ov"><div class="card" id="card"></div></div>
+ </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const OL="#2b3a33";
+function bgSvg(){
+ let bottles="";const cols=["#ff8a80","#ffd166","#7ec8e3","#b39ddb","#95d5a0","#ffab91"];
+ for(let r=0;r<2;r++){const y=r?78:34;bottles+=`<rect x="14" y="${y+34}" width="732" height="7" rx="3" fill="#b07a3c" stroke="${OL}" stroke-width="2"/>`;
+  for(let i=0;i<20;i++){const x=22+i*36;if(x>300&&x<460&&r===0)continue;const c=cols[(i*3+r*2)%6],h=18+((i*7+r)%3)*5;
+   bottles+=`<g><rect x="${x}" y="${y+34-h}" width="18" height="${h}" rx="3" fill="${c}" stroke="${OL}" stroke-width="2"/><rect x="${x+4}" y="${y+34-h-6}" width="10" height="7" rx="2" fill="#fff" stroke="${OL}" stroke-width="2"/><rect x="${x+3}" y="${y+34-h+6}" width="12" height="7" fill="#fff" opacity=".85"/></g>`}}
+ let tiles="";for(let i=0;i<20;i++)for(let j=0;j<3;j++)tiles+=`<rect x="${i*40}" y="${520+j*28}" width="40" height="28" fill="${(i+j)%2?"#e9f7ef":"#cfe9da"}"/>`;
+ return `<defs><linearGradient id="wl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9f0dc"/><stop offset="1" stop-color="#eefaf3"/></linearGradient></defs>
+ <rect width="760" height="600" fill="url(#wl)"/>${tiles}
+ <rect x="0" y="0" width="760" height="124" fill="#f4e3c3" opacity=".55"/>${bottles}
+ <rect x="300" y="14" width="160" height="62" rx="14" fill="#3a9d6e" stroke="${OL}" stroke-width="3"/>
+ <rect x="318" y="26" width="38" height="38" rx="8" fill="#fff"/><rect x="333" y="30" width="8" height="30" fill="#e63946"/><rect x="322" y="41" width="30" height="8" fill="#e63946"/>
+ <text x="408" y="52" font-size="22" font-weight="bold" text-anchor="middle" fill="#fff" font-family="Malgun Gothic,sans-serif">약국</text>
+ <rect x="0" y="574" width="760" height="26" fill="#a9703a" stroke="${OL}" stroke-width="3"/>`;
+}
+const PEOPLE=[
+ {skin:"#f6c7a1",hair:"#3b2a20",hs:0,shirt:"#4f8ef7"},
+ {skin:"#f2c4a0",hair:"#cfcfcf",hs:2,shirt:"#c77dba",glasses:1},
+ {skin:"#e8b48c",hair:"#d8d8d8",hs:3,shirt:"#6a8f5b",glasses:1},
+ {skin:"#f8d0ae",hair:"#6b3f1d",hs:4,shirt:"#ff8fab"},
+ {skin:"#e9b98f",hair:"#2b2b2b",hs:0,shirt:"#f4a261"},
+ {skin:"#f6c7a1",hair:"#7a3b1e",hs:1,shirt:"#2a9d8f"},
+ {skin:"#d9a077",hair:"#1d1d1d",hs:0,shirt:"#8d6be0"},
+ {skin:"#f2c4a0",hair:"#999",hs:2,shirt:"#e76f51"},
+ {skin:"#f8d0ae",hair:"#e9c46a",hs:1,shirt:"#457b9d"},
+ {skin:"#e8b48c",hair:"#3b2a20",hs:5,shirt:"#6d6875"}];
+function person(i){const p=PEOPLE[i%PEOPLE.length];
+ let back="",front="";
+ if(p.hs===1){back=`<path d="M22 52Q18 12 50 12Q82 12 78 52L82 96L66 96L66 52L34 52L34 96L18 96Z" fill="${p.hair}" stroke="${OL}" stroke-width="2.5"/>`}
+ if(p.hs===4){back=`<circle cx="18" cy="38" r="9" fill="${p.hair}" stroke="${OL}" stroke-width="2.5"/><circle cx="82" cy="38" r="9" fill="${p.hair}" stroke="${OL}" stroke-width="2.5"/>`}
+ if(p.hs===2||p.hs===3)back=p.hs===2?`<circle cx="50" cy="12" r="10" fill="${p.hair}" stroke="${OL}" stroke-width="2.5"/>`:"";
+ const top=p.hs===3?`<path d="M27 40Q27 28 36 26M73 40Q73 28 64 26" fill="none" stroke="${p.hair}" stroke-width="7" stroke-linecap="round"/>`:
+  `<path d="M26 46Q22 14 50 14Q78 14 74 46Q68 30 50 30Q32 30 26 46Z" fill="${p.hair}" stroke="${OL}" stroke-width="2.5"/>`;
+ const gl=p.glasses?`<g fill="#fff4" stroke="${OL}" stroke-width="2"><circle cx="39" cy="46" r="9"/><circle cx="61" cy="46" r="9"/><path d="M48 46h4"/></g>`:"";
+ const beard=p.hs===5?`<path d="M28 52Q50 86 72 52Q70 70 50 74Q30 70 28 52Z" fill="${p.hair}" opacity=".85"/>`:"";
+ return `<svg viewBox="0 0 100 120">${back}<path d="M10 120Q12 80 50 78Q88 80 90 120Z" fill="${p.shirt}" stroke="${OL}" stroke-width="2.5"/>
+ <path d="M40 80L50 94L60 80Z" fill="#fff" stroke="${OL}" stroke-width="2"/>
+ <rect x="42" y="64" width="16" height="18" fill="${p.skin}" stroke="${OL}" stroke-width="2.5"/>
+ <ellipse cx="50" cy="46" rx="24" ry="27" fill="${p.skin}" stroke="${OL}" stroke-width="2.5"/>${beard}${top}
+ <ellipse cx="40" cy="48" rx="3.2" ry="4.2" fill="${OL}"/><ellipse cx="60" cy="48" rx="3.2" ry="4.2" fill="${OL}"/>
+ <circle cx="41" cy="46.5" r="1.2" fill="#fff"/><circle cx="61" cy="46.5" r="1.2" fill="#fff"/>${gl}
+ <circle cx="33" cy="57" r="4" fill="#ff8a8a" opacity=".5"/><circle cx="67" cy="57" r="4" fill="#ff8a8a" opacity=".5"/>
+ <path id="mouth" d="M41 60Q50 69 59 60" fill="none" stroke="${OL}" stroke-width="2.8" stroke-linecap="round"/>
+ <path id="sweat" d="M78 30Q82 38 78 42Q74 38 78 30Z" fill="#6ec6ff" stroke="${OL}" stroke-width="1.5" style="display:none"/></svg>`}
+function mood(r){const m=document.getElementById("mouth");if(!m||!m.setAttribute)return;
+ m.setAttribute("d",r>.5?"M41 60Q50 69 59 60":r>.25?"M43 62L57 62":"M41 66Q50 56 59 66");
+ const sw=document.getElementById("sweat");if(sw&&sw.style)sw.style.display=r<=.5?"block":"none";
+ const f=document.querySelector(".face");if(f&&f.classList)f.classList.toggle("mad",r<=.25)}
+function icon(k){const w=`stroke="${OL}" stroke-width="2.2" stroke-linejoin="round"`;
+ const I={
+ pill:`<g transform="rotate(-35 20 20)"><path d="M20 12H12a8 8 0 0 0 0 16h8z" fill="#fff" ${w}/><path d="M20 12h8a8 8 0 0 1 0 16h-8z" fill="#ff6b6b" ${w}/><path d="M9 17a4 4 0 0 1 3-2" stroke="#fff" stroke-width="0"/></g>`,
+ syrup:`<rect x="15" y="3" width="10" height="6" rx="2" fill="#3a9d6e" ${w}/><rect x="17" y="9" width="6" height="5" fill="#ddd" ${w}/><rect x="10" y="14" width="20" height="23" rx="4" fill="#ffb347" ${w}/><rect x="13" y="21" width="14" height="10" rx="2" fill="#fff" stroke="none"/><rect x="18" y="23" width="4" height="6" fill="#e63946"/><rect x="16" y="25" width="8" height="2" fill="#e63946"/>`,
+ oint:`<path d="M10 4h20v6H10z" fill="#bbb" ${w}/><path d="M11 10h18l-2 22H13z" fill="#7ec8e3" ${w}/><rect x="15" y="32" width="10" height="6" rx="2" fill="#fff" ${w}/><path d="M14 18h12M14 23h12" stroke="#fff" stroke-width="2"/>`,
+ box:`<path d="M5 14L20 6L35 14L20 22Z" fill="#e8b878" ${w}/><path d="M5 14V30L20 38V22Z" fill="#d9a566" ${w}/><path d="M35 14V30L20 38V22Z" fill="#c08a45" ${w}/>`,
+ band:`<g transform="rotate(-30 20 20)"><rect x="3" y="12" width="34" height="16" rx="8" fill="#f5cfa0" ${w}/><rect x="14" y="12" width="12" height="16" fill="#ecb77a" ${w}/><circle cx="18" cy="20" r="1" fill="#b98250"/><circle cx="22" cy="20" r="1" fill="#b98250"/></g>`,
+ powder:`<path d="M7 8l3 -3l3 3l3 -3l3 3l3 -3l3 3l3 -3l3 3l3 -3l3 3V35H7Z" fill="#fff" ${w}/><rect x="17" y="17" width="6" height="14" fill="#3a9d6e"/><rect x="13" y="21" width="14" height="6" fill="#3a9d6e"/>`,
+ candy:`<path d="M2 10L11 20L2 30Z M38 10L29 20L38 30Z" fill="#ff8fab" ${w}/><circle cx="20" cy="20" r="11" fill="#ff5d8f" ${w}/><path d="M20 20m-8 0a8 8 0 0 1 8-8M20 20m-4 0a4 4 0 0 1 4-4" stroke="#fff" stroke-width="2.5" fill="none"/>`};
+ return `<svg viewBox="0 0 40 40">${I[k]}</svg>`}
+function binIcon(k){const w=`stroke="${OL}" stroke-width="2.2" stroke-linejoin="round"`;
+ if(k==="drug")return `<svg viewBox="0 0 40 40"><rect x="7" y="12" width="26" height="25" rx="3" fill="#ff6b6b" ${w}/><rect x="5" y="7" width="30" height="7" rx="2" fill="#e63946" ${w}/><rect x="18" y="18" width="4" height="13" fill="#fff"/><rect x="13.5" y="22.5" width="13" height="4" fill="#fff"/></svg>`;
+ if(k==="paper")return `<svg viewBox="0 0 40 40"><rect x="7" y="12" width="26" height="25" rx="3" fill="#6aa9ff" ${w}/><rect x="5" y="7" width="30" height="7" rx="2" fill="#3f7fe0" ${w}/><path d="M20 19l5 8h-10z" fill="none" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>`;
+ return `<svg viewBox="0 0 40 40"><path d="M8 12h24l-3 25H11z" fill="#b5b5b5" ${w}/><rect x="5" y="7" width="30" height="7" rx="2" fill="#8d8d8d" ${w}/><path d="M16 18v14M24 18v14" stroke="#fff" stroke-width="2.4"/></svg>`}
+function bacSVG(res){const c=res?"#9b59d0":"#6fcf5a",d=res?"#5e2a8c":"#3d8b2f";let sp="";
+ for(let i=0;i<10;i++){const a=i/10*6.283,x=20+Math.cos(a)*14,y=20+Math.sin(a)*14;sp+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${d}" stroke="${OL}" stroke-width="1.5"/>`}
+ const horn=res?`<path d="M10 9L14 16L18 12ZM30 9L26 16L22 12Z" fill="#ff4d6d" stroke="${OL}" stroke-width="1.8"/>`:"";
+ const eyes=res?`<path d="M12 17L18 20M28 17L22 20" stroke="${OL}" stroke-width="2.4" stroke-linecap="round"/><circle cx="16" cy="22" r="2" fill="${OL}"/><circle cx="24" cy="22" r="2" fill="${OL}"/><path d="M14 29Q20 24 26 29" fill="none" stroke="${OL}" stroke-width="2.2"/>`:
+ `<circle cx="15" cy="19" r="3.4" fill="#fff" stroke="${OL}" stroke-width="1.5"/><circle cx="25" cy="19" r="3.4" fill="#fff" stroke="${OL}" stroke-width="1.5"/><circle cx="15.5" cy="19.5" r="1.5" fill="${OL}"/><circle cx="25.5" cy="19.5" r="1.5" fill="${OL}"/><path d="M14 26Q20 31 26 26" fill="none" stroke="${OL}" stroke-width="2.2"/>`;
+ return `<svg viewBox="0 0 40 40">${sp}<circle cx="20" cy="20" r="14" fill="${c}" stroke="${OL}" stroke-width="2"/>${horn}${eyes}</svg>`}
+const PLAYER=`<svg viewBox="0 0 60 60" width="56" height="56"><circle cx="30" cy="30" r="26" fill="#ffd54f" stroke="${OL}" stroke-width="2.6"/><ellipse cx="21" cy="21" rx="3.2" ry="4.5" fill="${OL}"/><ellipse cx="39" cy="21" rx="3.2" ry="4.5" fill="${OL}"/><circle cx="22" cy="19.5" r="1.2" fill="#fff"/><circle cx="40" cy="19.5" r="1.2" fill="#fff"/><path d="M12 31Q30 64 48 31Z" fill="#8c2230" stroke="${OL}" stroke-width="2.6" stroke-linejoin="round"/><path d="M22 47Q30 40 38 47Q30 52 22 47Z" fill="#ff8fa3"/><circle cx="10" cy="30" r="4" fill="#ff8a8a" opacity=".5"/><circle cx="50" cy="30" r="4" fill="#ff8a8a" opacity=".5"/></svg>`;
+const PILLSVG=`<svg viewBox="0 0 40 40" width="34" height="34"><g transform="rotate(-35 20 20)"><path d="M20 11H12a9 9 0 0 0 0 18h8z" fill="#fff" stroke="${OL}" stroke-width="2.2"/><path d="M20 11h8a9 9 0 0 1 0 18h-8z" fill="#ff6b6b" stroke="${OL}" stroke-width="2.2"/></g></svg>`;
+
+const TOTAL=120;
+const FACES=[0,1,2,3,4,5,6,7,8,9];
+const MEDS=["해열진통제","소화제","알레르기약","멀미약","소독약·연고","인공눈물"];
+const SYMS=[
+ {s:"머리가 아프고 열이 나요.",a:"해열진통제"},
+ {s:"밥 먹고 나서 속이 더부룩해요.",a:"소화제"},
+ {s:"콧물이 줄줄 나고 재채기가 계속 나와요.",a:"알레르기약"},
+ {s:"내일 버스로 멀리 가는데 멀미가 심해요.",a:"멀미약"},
+ {s:"넘어져서 무릎이 살짝 까졌어요.",a:"소독약·연고"},
+ {s:"눈이 뻑뻑하고 건조해요.",a:"인공눈물"},
+ {s:"숨쉬기가 너무 힘들고 가슴이 심하게 아파요!",a:"병원·119 바로 안내",red:true}];
+const QS=[
+ {q:"약을 보관하기 가장 좋은 곳이 어디예요?",o:["서늘하고 마른 곳의 전용 보관함","욕실 거울장","햇빛 드는 창가"],a:0,w:"약은 햇빛·습기·열을 피해 서늘하고 마른 곳에 보관해요."},
+ {q:"항생제를 먹다가 증상이 나으면 그만 먹어도 되나요?",o:["나으면 바로 그만 먹어요","처방받은 기간만큼 끝까지 먹어요","남겼다가 다음에 아프면 먹어요"],a:1,w:"항생제를 중간에 끊으면 살아남은 세균이 강해져(내성) 약이 안 들 수 있어요."},
+ {q:"약을 먹을 땐 무엇과 함께 먹는 게 좋아요?",o:["우유나 주스","탄산음료","물"],a:2,w:"특별한 말이 없으면 약은 물과 함께 먹는 게 기본이에요."},
+ {q:"이름이 다른 감기약 두 가지를 같이 먹어도 돼요?",o:["이름이 다르니 괜찮아요","성분이 겹칠 수 있으니 약사에게 먼저 확인해요","많이 먹으면 빨리 나아요"],a:1,w:"이름이 달라도 같은 성분이 들어 있어 과하게 먹게 될 수 있어요."},
+ {q:"유통기한이 지난 약은 어떻게 해요?",o:["아까우니 먹어요","먹지 않고 폐의약품 수거함에 버려요","변기에 내려요"],a:1,w:"기한이 지난 약은 먹지 않고 수거함에 버려요."},
+ {q:"어린이에게 약을 먹일 땐 어떻게 해요?",o:["어른 약을 눈대중으로 반만","나이·몸무게에 맞는 정해진 용량","아이가 싫어하면 두 배로 한 번에"],a:1,w:"어린이 약은 나이와 몸무게에 맞는 정해진 양을 지켜야 해요."},
+ {q:"남은 내 약을 아픈 친구에게 나눠줘도 될까요?",o:["같은 증상이면 괜찮아요","절대 안 돼요. 사람마다 맞는 약이 달라요","반만 주면 괜찮아요"],a:1,w:"약은 사람마다 몸 상태가 달라서 나눠 먹으면 위험할 수 있어요."},
+ {q:"폐의약품 수거함은 어디에 있나요?",o:["약국·보건소·주민센터 등","편의점 앞 쓰레기통","학교 화장실"],a:0,w:"폐의약품은 약국·보건소·주민센터 등의 수거함에 버려요. 지역마다 조금 달라요."},
+ {q:"먹다 남은 약을 변기나 싱크대에 버리면 어떻게 돼요?",o:["물에 녹아 없어지니 괜찮아요","약 성분이 물을 오염시킬 수 있어요","냄새만 나요"],a:1,w:"약 성분이 하수로 흘러 하천과 바다를 오염시킬 수 있어요."}];
+const ITEMS=[
+ {n:"먹다 남은 알약",ic:"pill",b:"drug",w:"남은 알약은 폐의약품이라 수거함에 넣어요."},
+ {n:"유통기한 지난 시럽",ic:"syrup",b:"drug",w:"물약도 폐의약품이에요. 수거함으로!"},
+ {n:"쓰다 남은 연고",ic:"oint",b:"drug",w:"연고도 폐의약품이라 수거함에 넣어요."},
+ {n:"약을 뺀 빈 종이상자",ic:"box",b:"paper",w:"약이 없는 빈 종이상자는 종이류로 분리배출해요."},
+ {n:"쓰고 난 반창고",ic:"band",b:"trash",w:"사용한 반창고는 일반쓰레기예요."},
+ {n:"기한 지난 가루약",ic:"powder",b:"drug",w:"가루약도 폐의약품이라 수거함에 넣어요."}];
+const BN={drug:"폐의약품 수거함",paper:"종이류 재활용",trash:"일반쓰레기"};
+let G,AC;
+function beep(f,d,ty){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=ty||"sine";o.frequency.value=f;g.gain.value=.06;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+function fmt(t){t=Math.max(0,Math.ceil(t));return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
+function rnd(a){return a[Math.floor(Math.random()*a.length)]}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function hud(){$("hp").textContent="❤️".repeat(Math.max(0,G.hearts))+"🖤".repeat(Math.max(0,3-G.hearts));
+ $("tm").textContent="⏱️ "+fmt(G.t);$("tm").className="timer"+(G.t<=20?" low":"");
+ $("sc").textContent="⭐ "+G.score;$("cb").textContent=G.combo>=2?"🔥 "+G.combo+"연속":""}
+function start(){
+ G={t:TOTAL,hearts:3,score:0,combo:0,served:0,cust:null,run:true,lock:false,evOn:false,ev:[30+Math.random()*20,75+Math.random()*20],evDone:[false,false],lessons:{},wrong:0,evWin:0};
+ $("ov").classList.remove("show");hud();next();
+ clearInterval(G.iv);G.iv=setInterval(tick,100);
+}
+function tick(){
+ if(!G.run)return;
+ const prevT=G.t;G.t-=.1;
+ if(Math.ceil(prevT)!==Math.ceil(G.t)&&G.t<=10&&G.t>0)beep(900,.08,"square");
+ const el=TOTAL-G.t;
+ for(let i=0;i<2;i++){if(!G.evDone[i]&&el>=G.ev[i]&&!G.evOn){G.evDone[i]=true;startEvent();break}}
+ if(G.cust&&!G.lock&&!G.evOn){G.cust.p-=.1;
+  const bar=document.querySelector(".pat i");if(bar){const r=Math.max(0,G.cust.p/G.cust.max);bar.style.width=(r*100)+"%";bar.style.background=r>.5?"#3aa655":r>.25?"#f0b400":"#d62828";mood(r)}
+  if(G.cust.p<=0){fail("😤 손님이 기다리다 그냥 돌아갔어요!");}}
+ hud();
+ if(G.t<=0){end(true)}
+}
+function lesson(t){G.lessons[t]=1}
+function ok(msg,pts){const bonus=Math.ceil(Math.max(0,G.cust.p));G.combo++;G.score+=pts+bonus+Math.min(G.combo,5)*2;beep(660,.12);beep(880,.15);hud();feedback(true,msg)}
+function fail(msg,why){G.combo=0;G.wrong++;G.hearts--;beep(180,.35,"sawtooth");$("shop").classList.remove("shake");void $("shop").offsetWidth;$("shop").classList.add("shake");hud();
+ if(G.hearts<=0){G.lock=true;feedback(false,msg+(why?" "+why:""),true);setTimeout(()=>end(false),1500);return}
+ feedback(false,msg+(why?" "+why:""))}
+function feedback(good,msg,final){
+ G.lock=true;const m=$("main");let f=document.getElementById("fb");
+ if(!f){f=document.createElement("div");f.id="fb";m.appendChild(f)}
+ f.className="fb "+(good?"ok":"no");f.textContent=(good?"✅ ":"❌ ")+msg;
+ document.querySelectorAll(".opt,.item,.bin").forEach(b=>b.disabled=true);
+ if(!final)setTimeout(()=>{if(G.run){G.lock=false;next()}},good?900:1900);
+}
+function next(){
+ if(!G.run)return;G.served++;
+ const lv=Math.min(G.served,12);const base=Math.max(6,10-lv*.4);
+ let r=Math.random(),type=G.served===1?"sym":r<.42?"sym":r<.76?"q":"dis";
+ const face=rnd(FACES);let c={type,face};
+ if(type==="sym"){const s=rnd(SYMS);let opts;
+  if(s.red)opts=shuffle([s.a,"해열진통제","소화제"]);
+  else opts=shuffle([s.a,...shuffle(MEDS.filter(m=>m!==s.a)).slice(0,2)]);
+  c.s=s;c.opts=opts;c.p=c.max=base+.5;
+  $("main").innerHTML=`<div class="cust"><div class="face">${person(face)}</div><div class="bubble">${s.s}<br><span class="small">어떤 약을 드릴까요?</span></div></div><div class="pat"><i></i></div><div class="opts">${opts.map((o,i)=>`<button class="opt" onclick="pickSym(${i})"><span class="k">${"ABC"[i]}</span>${o}</button>`).join("")}</div>`;
+ }else if(type==="q"){const q=rnd(QS);const idx=shuffle([0,1,2]);
+  c.q=q;c.idx=idx;c.p=c.max=base+2;
+  $("main").innerHTML=`<div class="cust"><div class="face">${person(face)}</div><div class="bubble">약사님, 질문이 있어요!<br><b>${q.q}</b></div></div><div class="pat"><i></i></div><div class="opts">${idx.map(k=>`<button class="opt" onclick="pickQ(${k})"><span class="k">${"ABC"[idx.indexOf(k)]}</span>${q.o[k]}</button>`).join("")}</div>`;
+ }else{c.items=shuffle(ITEMS).slice(0,3);c.sel=-1;c.left=3;c.p=c.max=base+6;
+  renderDis(c,face);}
+ G.cust=c;G.lock=false;
+}
+function renderDis(c,face){
+ $("main").innerHTML=`<div class="cust"><div class="face">${person(face!=null?face:c.face)}</div><div class="bubble">집 정리하다 이런 게 나왔어요. <b>알맞은 곳에 버려 주세요!</b><br><span class="small">물건을 누르고, 버릴 곳을 누르세요.</span></div></div><div class="pat"><i></i></div>
+ <div class="items">${c.items.map((it,i)=>it?`<button class="item ${c.sel===i?"sel":""}" onclick="selItem(${i})">${icon(it.ic)}<span>${it.n}</span></button>`:"").join("")}</div>
+ <div class="bins">${Object.keys(BN).map(k=>`<button class="bin b-${k}" onclick="putBin('${k}')">${binIcon(k)}<span>${BN[k]}</span></button>`).join("")}</div>`;
+}
+function pickSym(i){if(G.lock||G.evOn)return;const c=G.cust,ch=c.opts[i];
+ lesson(c.s.red?"숨쉬기 힘들거나 가슴이 심하게 아프면 약보다 병원·119가 먼저예요.":"증상에 맞는 약을 고르고, 잘 모르면 약사에게 물어봐요. (예: "+c.s.s.replace(/요\.|요!/,"요")+" → "+c.s.a+")");
+ if(ch===c.s.a)ok("정답! "+(c.s.red?"위급하면 병원·119가 먼저예요.":"알맞은 약이에요."),10);
+ else fail("앗, 맞지 않는 약이에요!","정답: "+c.s.a)}
+function pickQ(k){if(G.lock||G.evOn)return;const c=G.cust;lesson(c.q.w);
+ if(k===c.q.a)ok("정답! "+c.q.w,12);else fail("틀렸어요.",c.q.w)}
+function selItem(i){if(G.lock||G.evOn)return;G.cust.sel=i;renderDis(G.cust)}
+function putBin(b){if(G.lock||G.evOn)return;const c=G.cust;if(c.sel<0){return}
+ const it=c.items[c.sel];lesson(it.w);
+ if(it.b===b){c.items[c.sel]=null;c.sel=-1;c.left--;G.combo++;G.score+=6+Math.min(G.combo,5)*2;beep(700,.1);hud();
+  if(c.left<=0){const bonus=Math.ceil(c.p);G.score+=bonus+10;hud();beep(880,.2);feedback(true,"모두 정리 완료! 수거함 이용 최고예요. 💊")}
+  else{renderDis(c);const f=document.createElement("div");f.className="fb ok";f.textContent="✅ "+it.w;f.id="fb2";$("main").appendChild(f)}}
+ else{c.p-=3;fail("그곳이 아니에요!",it.w+" (정답: "+BN[it.b]+")");}}
+/* ---- 돌발상황: 세균 습격 (낙하형) ---- */
+const KILL=[3,3,2,2,2];
+function startEvent(){
+ G.evOn=true;beep(500,.2,"square");setTimeout(()=>beep(400,.3,"square"),250);
+ $("shop").classList.add("alarm");setTimeout(()=>$("shop").classList.remove("alarm"),1700);
+ G.E={bact:12,caught:0,missed:0,spawned:0,x:50,dir:0,pills:[],done:false,raf:0,last:0,nextAt:.6,el:0,msg:""};
+ $("card").innerHTML=`<h2>🚨 돌발상황! 세균 습격!</h2><p style="line-height:1.7">세균 감염 손님이 항생제를 처방받았어요.<br>하늘에서 떨어지는 <b>💊 항생제 5알</b>을 모두 받아 먹게 해 주세요!<br>
+ ⬅️➡️ 키보드·화면 터치·버튼으로 좌우 이동<br>🍬 사탕은 피하기 (먹으면 -5초) · 하나라도 놓치면 위험해요!<br>
+ 중간에 <b>"그만 먹기"</b> 버튼이 유혹할 거예요… 누를까요? 😈</p><button class="btn red" onclick="evGo()">시작!</button>`;
+ $("ov").classList.add("show");
+}
+function evGo(){const E=G.E;
+ $("card").innerHTML=`<h2 id="evT"></h2><div style="display:flex;gap:8px;align-items:stretch">
+ <div id="field" style="position:relative;flex:1;height:290px;border-radius:14px;background:linear-gradient(#bfe6ff,#e9f7ff 60%,#c9a36a 60%,#c9a36a 100%);border:4px solid #2b3a33;overflow:hidden;touch-action:none">
+  <div style="position:absolute;left:0;right:0;bottom:0;height:12px;background:#8c6a3b;border-top:3px solid #2b3a33"></div><div id="pl" style="position:absolute;bottom:2px;transform:translateX(-50%);left:50%;line-height:0">${PLAYER}</div></div>
+ <div style="display:flex;flex-direction:column;gap:8px;justify-content:center;width:110px"><button class="btn red" id="stopb" onclick="evStop()">✋ 그만 먹기</button><div class="small" id="evm" style="min-height:70px"></div></div></div>
+ <div style="display:flex;gap:10px;margin-top:8px"><button class="btn" style="flex:1" id="bl">◀ 왼쪽</button><button class="btn" style="flex:1" id="br">오른쪽 ▶</button></div>`;
+ const f=$("field");
+ const mv=e=>{const r=f.getBoundingClientRect();const t=e.touches?e.touches[0]:e;E.x=Math.min(94,Math.max(6,(t.clientX-r.left)/r.width*100))};
+ f.addEventListener("mousemove",mv);f.addEventListener("touchmove",mv,{passive:true});f.addEventListener("touchstart",mv,{passive:true});
+ const hold=(id,d)=>{const el=$(id);["mousedown","touchstart"].forEach(ev=>el.addEventListener(ev,x=>{E.dir=d;x.preventDefault()}));["mouseup","mouseleave","touchend"].forEach(ev=>el.addEventListener(ev,()=>{E.dir=0}))};
+ hold("bl",-1);hold("br",1);
+ E.kd=e=>{if(e.key==="ArrowLeft"||e.key==="a")E.dir=-1;else if(e.key==="ArrowRight"||e.key==="d")E.dir=1};
+ E.ku=e=>{if(["ArrowLeft","ArrowRight","a","d"].includes(e.key))E.dir=0};
+ document.addEventListener("keydown",E.kd);document.addEventListener("keyup",E.ku);
+ E.last=performance.now();E.raf=requestAnimationFrame(evLoop);evHud();
+}
+function evHud(){const E=G.E;$("evT").textContent=`🦠 세균 ${E.bact}마리 · 💊 ${E.caught}/5 먹음`}
+function evMsg(t){const m=$("evm");if(m)m.textContent=t}
+function evLoop(now){const E=G.E;if(!E||E.done||!G.run)return;
+ const dt=Math.min(.05,(now-E.last)/1000);E.last=now;E.el+=dt;
+ E.x=Math.min(94,Math.max(6,E.x+E.dir*75*dt));$("pl").style.left=E.x+"%";
+ const f=$("field"),H=f.clientHeight;
+ if(E.el>=E.nextAt&&E.spawned<5+3){ // 항생제 5알 + 사탕 최대 3개
+  const pillsLeft=5-E.pills.filter(p=>p.k==="p").length-E.caught-E.missed;
+  const candy=E.spawned%3===2&&Math.random()<.8;
+  if(candy||pillsLeft>0){const k=candy?"c":"p";const el=document.createElement("div");el.innerHTML=k==="p"?PILLSVG:icon("candy").replace("<svg ","<svg width=\"34\" height=\"34\" ");
+   el.style.cssText="position:absolute;top:-30px;line-height:0;transform:translateX(-50%);left:"+(8+Math.random()*84)+"%";f.appendChild(el);
+   E.pills.push({el,k,y:-30,v:105+E.caught*28+Math.random()*25});E.spawned++}
+  E.nextAt=E.el+1.7-E.caught*.12;}
+ for(const p of E.pills.slice()){p.y+=p.v*dt;p.el.style.top=p.y+"px";
+  const px=parseFloat(p.el.style.left),near=Math.abs(px-E.x)<9;
+  if(p.y>H-52&&p.y<H-8&&near){ // 받음
+   E.pills.splice(E.pills.indexOf(p),1);p.el.remove();
+   if(p.k==="p"){E.caught++;E.bact=Math.max(0,E.bact-KILL[E.caught-1]);beep(700+E.caught*80,.1);evMsg("냠! 세균이 줄어요 👍");
+    if(E.caught===3)tempt();evHud()}
+   else{G.t=Math.max(1,G.t-5);beep(160,.25,"sawtooth");evMsg("🍬 사탕을 먹었어요! -5초");}
+  }else if(p.y>H){E.pills.splice(E.pills.indexOf(p),1);p.el.remove();
+   if(p.k==="p"){E.missed++;beep(200,.3,"sawtooth");evMsg("💊 놓쳤어요! 약을 빼먹으면 위험해요!");evHud()}}}
+ if(E.caught+E.missed>=5&&E.pills.filter(p=>p.k==="p").length===0){evEnd();return}
+ E.raf=requestAnimationFrame(evLoop);
+}
+function tempt(){const b=$("stopb");if(!b)return;evMsg("🤒 열이 내렸어요! \"이제 다 나았나 봐. 그만 먹을까?\"");b.style.animation="pulse .4s infinite alternate"}
+function evCleanup(){const E=G.E;if(!E)return;E.done=true;cancelAnimationFrame(E.raf);document.removeEventListener("keydown",E.kd);document.removeEventListener("keyup",E.ku)}
+function evEnd(){const E=G.E;evCleanup();
+ if(E.missed===0)evWin();else evResist("약을 "+E.missed+"번 빼먹었어요! 중간에 약이 끊기면 살아남은 세균이 강해질 수 있어요.")}
+function evStop(){const E=G.E;if(!E||E.done)return;evCleanup();evResist("나아진 것 같아서 그만 먹었어요!")}
+function evResist(why){const E=G.E;
+ lesson("항생제는 증상이 나아져도 처방받은 기간만큼, 정해진 시간에 빠짐없이 끝까지 먹어야 해요. 중간에 끊거나 빼먹으면 살아남은 세균이 내성을 가져 약이 안 들 수 있어요.");
+ beep(150,.5,"sawtooth");let n=Math.max(2,E.bact||3),arr=[];
+ const draw=msg=>{$("card").innerHTML=`<h2>😱 내성균 출현!</h2><div class="dish">${arr.map(b=>`<span class="bac res pop" style="left:${b[0]}%;top:${b[1]}%">${bacSVG(true)}</span>`).join("")}</div><p>${msg}</p>`};
+ for(let i=0;i<n;i++)arr.push([8+Math.random()*80,10+Math.random()*70]);draw(why);
+ let c=0;const iv=setInterval(()=>{c++;arr.push([8+Math.random()*80,10+Math.random()*70]);draw("약이 듣지 않는 내성균이 마구 늘어나요!");
+  if(c>=8){clearInterval(iv);G.combo=0;G.hearts--;G.score=Math.max(0,G.score-20);hud();
+   $("card").innerHTML+=`<p style="color:#b00"><b>❌ 신뢰도 -1 · 점수 -20</b><br>항생제는 끝까지, 빠짐없이 먹어야 해요.</p><button class="btn" onclick="evClose()">약국으로 돌아가기</button>`}},200)}
+function evWin(){G.evWin++;lesson("항생제는 처방받은 기간만큼 빠짐없이 끝까지 먹어야 내성균이 생기지 않아요.");
+ beep(660,.12);beep(880,.15);beep(1100,.2);G.score+=50;G.t+=10;hud();
+ $("card").innerHTML=`<div style="font-size:50px">🎉</div><h2>세균이 모두 사라졌어요!</h2><p style="color:#14602b"><b>✅ 점수 +50 · 시간 +10초</b><br>끝까지 빠짐없이 먹어서 내성균이 생기지 않았어요!</p><button class="btn" onclick="evClose()">약국으로 돌아가기</button>`}
+function evClose(){evCleanup();$("ov").classList.remove("show");G.evOn=false;
+ if(G.hearts<=0){end(false);return}}
+
+/* ---- 공용 랭킹 ---- */
+const API="https://script.google.com/macros/s/AKfycbxEw7MPjk2RDgRynfb22AnvCazaShRaMj8ZbrX5u4wNl_xn6tfpgbw0us92MHSQH8hjFQ/exec";  // ← 구글 Apps Script 웹 앱 URL을 여기에 붙여 넣으세요. 비어 있으면 이 기기에만 저장돼요.
+const RK="pharmRanking";
+function esc(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function cleanName(n){return String(n||"").replace(/[<>&"'`\\=+@]/g,"").replace(/\s+/g," ").trim().slice(0,8)}
+function localList(){try{const a=JSON.parse(localStorage.getItem(RK)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function callOnce(params){ // 스크립트 태그 방식(JSONP): 브라우저의 접속 차단(CORS)에 걸리지 않아요
+ return new Promise((resolve,reject)=>{
+  const cb="jp"+Date.now()+Math.floor(Math.random()*1e6);const sc=document.createElement("script");let done=false;
+  const fin=()=>{done=true;clearTimeout(to);try{delete window[cb]}catch(e){window[cb]=undefined}sc.remove()};
+  window[cb]=d=>{fin();resolve(d)};
+  sc.onerror=()=>{if(done)return;fin();const e=new Error("load");e.name="LoadErr";reject(e)};
+  const to=setTimeout(()=>{if(done)return;fin();const e=new Error("timeout");e.name="AbortError";reject(e)},15000);
+  sc.src=API+"?"+new URLSearchParams(Object.assign({},params,{callback:cb})).toString();
+  document.head.appendChild(sc)})}
+async function viaFetch(params){
+ const u=API+"?"+new URLSearchParams(params).toString();
+ const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),20000);
+ try{const r=await fetch(u,{signal:ctl.signal,redirect:"follow"});const t=await r.text();
+  try{return JSON.parse(t)}catch(e){const m=t.match(/^[\w$]+\(([\s\S]*)\);?\s*$/);if(m)return JSON.parse(m[1]);throw new Error("bad")}}
+ finally{clearTimeout(to)}}
+let LASTERR={};
+async function call(params){ // 1) fetch 방식 먼저 → 안 되면 2) 스크립트 방식
+ try{return await viaFetch(params)}catch(e){LASTERR.b=(e&&e.name)||"err"}
+ try{return await callOnce(params)}catch(e){LASTERR.a=(e&&e.name)||"err";throw e}}
+function errInfo(e){return "(방법1: "+(LASTERR.a||"-")+" / 방법2: "+(LASTERR.b||"-")+" / 열린 방식: "+location.protocol+" / 인터넷: "+(navigator.onLine?"연결됨":"끊김")+")"}
+async function diag(){
+ $("card").innerHTML=`<h2>🔧 연결 점검</h2><p class="small" id="dg">점검 중... 최대 1분 걸려요 ⏳</p>`;$("ov").classList.add("show");
+ const out=[];const t0=Date.now();
+ out.push("열린 방식: "+location.protocol+" ("+(location.href.slice(0,40))+")");
+ out.push("인터넷: "+(navigator.onLine?"연결됨":"끊김"));
+ try{const d=await callOnce({action:"list"});out.push("방법1(스크립트): ✅ 성공 "+(Date.now()-t0)+"ms, 기록 "+(d.list||[]).length+"개")}catch(e){out.push("방법1(스크립트): ❌ "+((e&&e.name)||"err"))}
+ const t1=Date.now();
+ try{const d=await viaFetch({action:"list"});out.push("방법2(fetch): ✅ 성공 "+(Date.now()-t1)+"ms, 기록 "+(d.list||[]).length+"개")}catch(e){out.push("방법2(fetch): ❌ "+((e&&e.name)||"err")+" "+((e&&e.message)||""))}
+ $("card").innerHTML=`<h2>🔧 연결 점검 결과</h2><div style="text-align:left;line-height:1.8;font-size:14px;background:#f6f6f6;padding:10px;border-radius:10px">${out.map(esc).join("<br>")}</div><p class="small">이 화면을 캡처해서 알려 주세요!</p><div class="row"><button class="btn" onclick="showStart()">게임으로</button></div>`}
+async function getRank(){
+ if(!API)return{ok:true,list:localList()};
+ try{return await call({action:"list"})}catch(e){return{ok:false,err:"net"}}}
+function rankTable(list,me){
+ if(!list.length)return `<p class="small">아직 등록된 기록이 없어요. 첫 번째 주인공이 되어 보세요! 🥇</p>`;
+ const md=["🥇","🥈","🥉"];let hit=false;
+ return `<div class="rkw"><table class="rk"><tr><th>순위</th><th>닉네임</th><th>점수</th><th>손님</th></tr>${list.map((e,i)=>{const m=!hit&&me&&e.n===me.n&&e.s===me.s;if(m)hit=true;return `<tr class="${m?"me":""}"><td>${md[i]||i+1}</td><td>${esc(e.n)}</td><td>${e.s}</td><td>${e.c}명</td></tr>`}).join("")}</table></div>`}
+async function showRanking(me,msg){
+ $("card").innerHTML=`<div style="font-size:44px">🏆</div><h2>약사 랭킹 TOP 50</h2><p class="small" id="rkl">불러오는 중... ⏳</p>`;
+ $("ov").classList.add("show");
+ const r=await getRank();
+ const body=r.ok?rankTable(r.list,me):`<p style="color:#b00"><b>랭킹을 불러오지 못했어요.</b><br>인터넷 연결이나 서버 주소를 확인해 주세요.</p>`;
+ $("card").innerHTML=`<div style="font-size:44px">🏆</div><h2>약사 랭킹 TOP 50</h2>${msg?`<p><b>${msg}</b></p>`:""}${body}
+ <p class="small">${API?"모두가 함께 보는 랭킹이에요.":"※ 서버 주소가 없어 이 기기에서만 보이는 랭킹이에요."}</p>
+ <div class="row"><button class="btn" onclick="showStart()">게임으로</button><button class="btn" onclick="showRanking()">🔄 새로고침</button><button class="btn gray" onclick="diag()">🔧 연결 점검</button><button class="btn gray" onclick="resetRank()">관리자: 기록 지우기</button></div>`;
+}
+function lhash(n,p){let h=5381;const t=n+"|"+p;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))>>>0;return String(h)}
+async function regScore(){
+ if(G.reg||G.busy)return;const n=cleanName($("nick").value);const pw=($("pw").value||"").trim();const m=$("rgmsg");
+ const bad=t=>{m.style.color="#b00";m.textContent=t;$("regbtn").disabled=false;G.busy=false};
+ if(!n){m.style.color="#b00";m.textContent="닉네임을 입력해 주세요! (최대 8글자)";return}
+ if(pw.length<4||pw.length>20){m.style.color="#b00";m.textContent="비밀번호는 4~20글자로 정해 주세요.";return}
+ G.busy=true;$("regbtn").disabled=true;m.style.color="#555";m.textContent="등록하는 중... ⏳";
+ try{localStorage.setItem("pharmNick",n)}catch(e){}
+ const cnt=Math.max(0,G.served-1);let list,status,best;
+ if(!API){
+  const r=localList(),h=lhash(n,pw),i=r.findIndex(e=>e.n===n);
+  if(i>=0){if(r[i].h!==h)return bad("❌ 이미 있는 닉네임이에요. 비밀번호가 맞지 않아요!");
+   if(G.score>r[i].s){r[i]={n,s:G.score,c:cnt,d:Date.now(),h};status="updated"}else{status="kept";best=r[i].s}}
+  else{r.push({n,s:G.score,c:cnt,d:Date.now(),h});status="new"}
+  r.sort((a,b)=>b.s-a.s||a.d-b.d);const top=r.slice(0,50);
+  try{localStorage.setItem(RK,JSON.stringify(top))}catch(e){return bad("이 브라우저에서는 저장이 안 돼요.")}
+  list=top.map(e=>({n:e.n,s:e.s,c:e.c}));
+ }else{
+  try{const r=await call({action:"submit",n,s:G.score,c:cnt,pw});
+   if(!r.ok){return bad(r.err==="pw"?"❌ 이미 있는 닉네임이에요. 비밀번호가 맞지 않아요!":r.err==="pwlen"?"비밀번호는 4~20글자로 정해 주세요.":"등록하지 못했어요. 다시 시도해 주세요.")}
+   list=r.list;status=r.status;best=r.best}
+  catch(e){
+   const info=errInfo(e);
+   // 마지막 수단: 이미지 요청으로 등록 신호만 보내고(브라우저 차단에 안 걸림), 잠시 뒤 랭킹에서 내 기록을 확인
+   try{new Image().src=API+"?"+new URLSearchParams({action:"submit",n,s:G.score,c:cnt,pw}).toString()}catch(_){}
+   m.style.color="#555";m.textContent="연결이 느려요. 등록 결과를 확인하는 중... ⏳";
+   await new Promise(r=>setTimeout(r,5000));
+   let chk=null;try{chk=await call({action:"list"})}catch(_){}
+   const me=chk&&chk.ok&&chk.list?chk.list.find(x=>x.n===n):null;
+   if(me){list=chk.list;best=me.s;status=me.s>G.score?"kept":"new"}
+   else return bad("서버에 연결하지 못했어요 [v14] "+info+" ← 이 화면을 캡처해서 보내 주세요")}}
+ G.busy=false;G.reg=true;beep(660,.12);beep(880,.15);
+ const place=list.findIndex(e=>e.n===n);
+ const where=place>=0?`${place+1}위`:"50위 밖";
+ const msg=status==="new"?`새로 등록됐어요! 현재 ${where} 🎉`:status==="updated"?`점수를 갱신했어요! 현재 ${where} 🚀`:`기존 최고 점수(${best}점)가 더 높아서 그대로 유지돼요. 현재 ${where}`;
+ const sc=status==="kept"?best:G.score;
+ showRanking({n,s:sc},msg);
+}
+async function resetRank(){
+ if(!confirm("랭킹 기록을 모두 지울까요? 되돌릴 수 없어요."))return;
+ if(!API){try{localStorage.removeItem(RK)}catch(e){}showRanking();return}
+ const pw=prompt("관리자 비밀번호를 입력하세요. (서버 코드에 적은 ADMIN_PASSWORD)");if(!pw)return;
+ try{const r=await call({action:"reset",pw});if(r.ok)showRanking(null,"랭킹을 초기화했어요.");else alert(r.err==="pw"?"비밀번호가 맞지 않아요.":"실패했어요.")}catch(e){alert("서버에 연결하지 못했어요.")}}
+document.addEventListener("keydown",e=>{const id=document.activeElement&&document.activeElement.id;if(e.key==="Enter"&&(id==="nick"||id==="pw"))regScore()});
+/* ---- 종료 ---- */
+function end(clear){
+ if(!G.run)return;G.run=false;clearInterval(G.iv);if(G.E)evCleanup();
+ let best=0;try{best=+localStorage.getItem("pharmBest")||0;if(G.score>best){best=G.score;localStorage.setItem("pharmBest",best)}}catch(e){}
+ const g=!clear?["😢","오늘은 여기까지!"]:G.score>=300?["🏆","전설의 약사"]:G.score>=180?["🥈","믿음직한 약사"]:["🌱","새내기 약사"];
+ const ls=Object.keys(G.lessons);let nick0="";try{nick0=localStorage.getItem("pharmNick")||""}catch(e){}G.reg=false;G.busy=false;
+ $("card").innerHTML=`<div style="font-size:50px">${g[0]}</div><h2>${clear?"영업 종료!":"신뢰도가 바닥났어요..."} ${g[1]}</h2>
+ <p>⭐ 점수 <b>${G.score}</b> (최고 ${best}) · 응대한 손님 ${G.served-1+(clear?1:0)}명 · 실수 ${G.wrong}번 · 돌발상황 성공 ${G.evWin}번</p>
+ <div style="text-align:left"><b>📋 오늘 배운 약 상식 (${ls.length}개)</b><ul class="ls">${ls.map(x=>"<li>"+x+"</li>").join("")}</ul>
+ <p class="small">※ 수거함 위치와 분리배출 방법은 지역마다 조금 다를 수 있어요. 환경부·지자체 안내를 확인해요.</p></div>
+ <div class="reg"><b>🏆 랭킹에 이름 남기기</b><br><br><input id="nick" maxlength="8" placeholder="닉네임 (최대 8글자)" value="${esc(nick0)}" autocomplete="off"><br><input id="pw" type="password" maxlength="20" placeholder="나만의 비밀번호 (4글자 이상)" autocomplete="off" style="margin-top:8px"><div class="small" style="margin-top:6px">같은 닉네임+비밀번호로 다시 등록하면 점수가 갱신돼요.<br>(더 높은 점수일 때만 바뀌어요 · 중요한 비밀번호는 쓰지 마세요!)</div><button class="btn" id="regbtn" style="margin-top:8px" onclick="regScore()">등록</button><div class="small" id="rgmsg" style="margin-top:6px;color:#b00"></div></div>
+ <div class="row"><button class="btn" onclick="showStart()">다시 도전!</button><button class="btn gray" onclick="showRanking()">랭킹 보기</button></div>`;
+ $("ov").classList.add("show");
+}
+function showStart(){
+ $("card").innerHTML=`<div style="font-size:48px">💊🏪</div><h2>약국 챌린지</h2>
+ <p style="text-align:left;line-height:1.7">⏱️ <b>2분</b> 동안 최대한 많은 손님을 도와요!<br>
+ 🤒 <b>증상 손님</b>: 알맞은 약 고르기<br>
+ ❓ <b>질문 손님</b>: 약 상식 답하기<br>
+ 🗑️ <b>정리 손님</b>: 남은 약을 폐의약품 수거함 등에 알맞게 버리기<br>
+ 🚨 <b>돌발상황</b>: 세균 습격! 떨어지는 항생제를 받아 먹게 도와요<br>
+ ❤️ 틀리거나 손님이 기다리다 가면 신뢰도 -1 (3번이면 끝!)</p>
+ <div class="row"><button class="btn" onclick="start()">영업 시작! ▶</button><button class="btn gray" onclick="showRanking()">🏆 랭킹 보기</button><button class="btn gray" onclick="diag()">🔧 연결 점검</button></div>`;
+ $("ov").classList.add("show");
+}
+$("bg").innerHTML=bgSvg();
+showStart();
+</script><div style="position:fixed;left:6px;bottom:4px;font-size:11px;color:#6a8;z-index:5;pointer-events:none">v14</div></body></html>
